@@ -14,6 +14,10 @@
 
 grammar Lua;
 
+@header {
+package com.github.forestbelton.glua;
+}
+
 chunk : (stat (';')?)* (laststat (';')?)?;
 
 block : chunk;
