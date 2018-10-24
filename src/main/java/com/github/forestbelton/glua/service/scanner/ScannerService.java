@@ -1,10 +1,12 @@
-package com.github.forestbelton.glua.service;
+package com.github.forestbelton.glua.service.scanner;
+
+import com.github.forestbelton.glua.model.Module;
 
 public interface ScannerService {
     /**
-     * Scans a directory for Lua files.
+     * Scans a directory for Lua modules.
      * @param directoryName The directory to scan.
-     * @return An @{link Iterable} containing the full paths of the found Lua files.
+     * @return An @{link Iterable} containing all modules found.
      */
-    Iterable<String> scanDirectory(String directoryName);
+    Iterable<Module> scanDirectory(String directoryName);
 }

@@ -1,4 +1,4 @@
-package com.github.forestbelton.glua;
+package com.github.forestbelton.glua.app;
 
 public class GluaSettings {
     public final String directoryName;

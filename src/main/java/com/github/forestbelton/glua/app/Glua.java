@@ -1,15 +1,24 @@
-package com.github.forestbelton.glua;
+package com.github.forestbelton.glua.app;
 
+import com.github.forestbelton.glua.model.Module;
+import com.github.forestbelton.glua.service.dependency.DependencyService;
+import com.github.forestbelton.glua.service.dependency.DependencyServiceImpl;
 import com.github.forestbelton.glua.service.scanner.ScannerService;
 import com.github.forestbelton.glua.service.scanner.ScannerServiceImpl;
+import org.jgrapht.Graph;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.traverse.TopologicalOrderIterator;
 
 public class Glua implements Runnable {
     private final GluaSettings settings;
     private final ScannerService scannerService;
+    private final DependencyService dependencyService;
 
-    public Glua(GluaSettings settings, ScannerService scannerService) {
+    public Glua(GluaSettings settings, ScannerService scannerService, DependencyService dependencyService) {
         this.settings = settings;
         this.scannerService = scannerService;
+        this.dependencyService = dependencyService;
     }
 
     public static void main(String[] args) {
@@ -18,60 +27,30 @@ public class Glua implements Runnable {
                 .directoryName("")
                 .build();
 
-        final Glua glua = new Glua(settings, new ScannerServiceImpl());
+        final Glua glua = new Glua(settings, new ScannerServiceImpl(), new DependencyServiceImpl());
         glua.run();
     }
 
     @Override
     public void run() {
-        for (String fileName : scannerService.scanDirectory(settings.directoryName)) {
+        final Graph<Module, DefaultEdge> dependencyGraph = new SimpleGraph<>(DefaultEdge.class);
+
+        for (Module module : scannerService.scanDirectory(settings.directoryName)) {
+            final Iterable<Module> dependencies = dependencyService.findDependencies(module);
+
+            dependencyGraph.addVertex(module);
+            for (Module dependency : dependencies) {
+                dependencyGraph.addVertex(dependency);
+                dependencyGraph.addEdge(module, dependency);
+            }
+        }
+
+        final TopologicalOrderIterator<Module, DefaultEdge> ordering = new TopologicalOrderIterator<>(dependencyGraph);
+        while (ordering.hasNext()) {
+            final Module module = ordering.next();
+
+            // TODO: Replace all require() calls with references to state
+            // TODO: Wrap module contents and put in state
         }
     }
 }
-
-/*
-import java.io.IOException;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-
-public class Glua extends LuaBaseListener {
-    public static void main(String[] args) throws Exception {
-        if (args.length < 3) {
-            usage(args[0]);
-            System.exit(1);
-        }
-
-        new Gluer(args[2]).process();
-    }
-
-    protected static void usage(String programName) {
-        System.err.printf(""
-            + "usage: %s <path> <main-file>\n"
-            + "<path>\tproject source root directory\n"
-            + "<main-file>\tfilename of the application entry point\n",
-            programName);
-    }
-
-    protected static class Gluer {
-        protected final String entryPoint;
-
-        public Gluer(String entryPoint) {
-            this.entryPoint = entryPoint;
-        }
-
-        public void process() throws IOException {
-            this.process(entryPoint);
-        }
-
-        protected void process(String fileName) throws IOException {
-            final CharStream inputStream = CharStreams.fromFileName(fileName);
-            final com.github.forestbelton.glua.LuaLexer lexer = new LuaLexer(inputStream);
-            final CommonTokenStream tokens = new CommonTokenStream(lexer);
-            final LuaParser parser = new LuaParser(tokens);
-
-            // TODO: Transform and store
-        }
-    }
-}
-*/
