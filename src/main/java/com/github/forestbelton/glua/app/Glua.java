@@ -14,7 +14,6 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Set;
 
 public class Glua implements Runnable {
     private final GluaSettings settings;
@@ -50,6 +49,7 @@ public class Glua implements Runnable {
     private void run(PrintStream outputStream) {
         final Graph<Module, DefaultEdge> dependencyGraph = new SimpleDirectedGraph<>(DefaultEdge.class);
 
+        // TODO: Instead of calling ScannerService::scanDirectory, do DFS on an entrypoint
         for (Module module : scannerService.scanDirectory(settings.directoryName)) {
             final Iterable<Module> dependencies = dependencyService.findDependencies(module);
 
