@@ -14,6 +14,10 @@ public class Module {
         this.fileName = fileName;
     }
 
+    public String name() {
+        return fileName.replaceAll("[^A-Za-z0-9_]+", "_");
+    }
+
     public String contents() {
         if (this.contents == null) {
             try {
