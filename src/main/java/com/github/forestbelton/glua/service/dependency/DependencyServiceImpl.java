@@ -1,62 +1,49 @@
 package com.github.forestbelton.glua.service.dependency;
 
+import com.github.forestbelton.glua.LuaBaseListener;
+import com.github.forestbelton.glua.LuaLexer;
+import com.github.forestbelton.glua.LuaParser;
 import com.github.forestbelton.glua.model.Module;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
+import java.io.IOException;
 import java.util.Collections;
 
 public class DependencyServiceImpl implements DependencyService {
     @Override
     public Iterable<Module> findDependencies(Module module) {
-        return Collections.emptyList();
-    }
-}
+        Iterable<Module> dependencies = Collections.emptyList();
 
-/*
-
-TODO: Salvage the parts into this implementation
-
-import java.io.IOException;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-
-public class Glua extends LuaBaseListener {
-    public static void main(String[] args) throws Exception {
-        if (args.length < 3) {
-            usage(args[0]);
-            System.exit(1);
-        }
-
-        new Gluer(args[2]).process();
-    }
-
-    protected static void usage(String programName) {
-        System.err.printf(""
-            + "usage: %s <path> <main-file>\n"
-            + "<path>\tproject source root directory\n"
-            + "<main-file>\tfilename of the application entry point\n",
-            programName);
-    }
-
-    protected static class Gluer {
-        protected final String entryPoint;
-
-        public Gluer(String entryPoint) {
-            this.entryPoint = entryPoint;
-        }
-
-        public void process() throws IOException {
-            this.process(entryPoint);
-        }
-
-        protected void process(String fileName) throws IOException {
-            final CharStream inputStream = CharStreams.fromFileName(fileName);
-            final com.github.forestbelton.glua.LuaLexer lexer = new LuaLexer(inputStream);
+        try {
+            final LuaLexer lexer = new LuaLexer(CharStreams.fromFileName(module.fileName));
             final CommonTokenStream tokens = new CommonTokenStream(lexer);
             final LuaParser parser = new LuaParser(tokens);
+            final LuaParser.ChunkContext fileChunk = parser.chunk();
 
-            // TODO: Transform and store
+            final ParseTreeWalker walker = new ParseTreeWalker();
+            final DependencyListener listener = new DependencyListener();
+
+            walker.walk(listener, fileChunk);
+            dependencies = listener.dependencies();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+        return dependencies;
+    }
+
+    private static class DependencyListener extends LuaBaseListener {
+        public Iterable<Module> dependencies() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public void enterFunctioncall(LuaParser.FunctioncallContext ctx) {
+            final String functionName = ctx.varOrExp().var().NAME().getText();
+
+            System.out.printf("found function call, function = %s\n", functionName);
         }
     }
 }
-*/
