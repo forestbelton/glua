@@ -1,10 +1,13 @@
 package com.github.forestbelton.glua.service.dependency;
 
 import com.github.forestbelton.glua.helper.lua.LuaParsingHelper;
+import com.github.forestbelton.glua.helper.lua.LuaRequireCallBaseListener;
 import com.github.forestbelton.glua.model.Module;
+import com.github.forestbelton.glua.model.RequireCall;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 
 public class DependencyServiceImpl implements DependencyService {
@@ -24,5 +27,28 @@ public class DependencyServiceImpl implements DependencyService {
         }
 
         return dependencies;
+    }
+
+    /** Converts every require() call into a {@link Module}. */
+    private static class DependencyListener extends LuaRequireCallBaseListener {
+        private final ArrayList<Module> dependencies = new ArrayList<>();
+
+        public DependencyListener(String baseDirectory) {
+            super(baseDirectory);
+        }
+
+        /**
+         * Retrieve all of the dependencies that were located.
+         * @return The list of dependencies
+         */
+        public Iterable<Module> dependencies() {
+            return Collections.unmodifiableList(dependencies);
+        }
+
+        @Override
+        protected void onRequireCall(RequireCall requireCall) {
+            final Module dependency = Module.builder().fileName(requireCall.requirePath).build();
+            dependencies.add(dependency);
+        }
     }
 }
