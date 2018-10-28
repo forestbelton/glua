@@ -66,7 +66,6 @@ public class Glua implements Runnable {
         for (Module module : scannerService.scanDirectory(settings.directoryName)) {
             final Iterable<Module> dependencies = dependencyService.findDependencies(module);
 
-            //System.out.println("adding source file: " + module.fileName);
             logger.info("adding source file: " + module.fileName);
             dependencyGraph.addVertex(module);
             for (Module dependency : dependencies) {
