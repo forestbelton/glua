@@ -1,62 +1,54 @@
 package com.github.forestbelton.glua.service.dependency;
 
+import com.github.forestbelton.glua.helper.lua.LuaParsingHelper;
+import com.github.forestbelton.glua.helper.lua.LuaRequireCallBaseListener;
 import com.github.forestbelton.glua.model.Module;
+import com.github.forestbelton.glua.model.RequireCall;
 
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 
 public class DependencyServiceImpl implements DependencyService {
     @Override
     public Iterable<Module> findDependencies(Module module) {
-        return Collections.emptyList();
-    }
-}
+        Iterable<Module> dependencies = Collections.emptyList();
 
-/*
+        System.out.println("reading dependencies for: " + module.fileName);
+        try {
+            final String fileDirectoryName = Paths.get(module.fileName).getParent().toString();
+            final DependencyListener listener = new DependencyListener(fileDirectoryName);
 
-TODO: Salvage the parts into this implementation
-
-import java.io.IOException;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-
-public class Glua extends LuaBaseListener {
-    public static void main(String[] args) throws Exception {
-        if (args.length < 3) {
-            usage(args[0]);
-            System.exit(1);
+            LuaParsingHelper.parseWithListener(module, listener);
+            dependencies = listener.dependencies();
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
 
-        new Gluer(args[2]).process();
+        return dependencies;
     }
 
-    protected static void usage(String programName) {
-        System.err.printf(""
-            + "usage: %s <path> <main-file>\n"
-            + "<path>\tproject source root directory\n"
-            + "<main-file>\tfilename of the application entry point\n",
-            programName);
-    }
+    /** Converts every require() call into a {@link Module}. */
+    private static class DependencyListener extends LuaRequireCallBaseListener {
+        private final ArrayList<Module> dependencies = new ArrayList<>();
 
-    protected static class Gluer {
-        protected final String entryPoint;
-
-        public Gluer(String entryPoint) {
-            this.entryPoint = entryPoint;
+        public DependencyListener(String baseDirectory) {
+            super(baseDirectory);
         }
 
-        public void process() throws IOException {
-            this.process(entryPoint);
+        /**
+         * Retrieve all of the dependencies that were located.
+         * @return The list of dependencies
+         */
+        public Iterable<Module> dependencies() {
+            return Collections.unmodifiableList(dependencies);
         }
 
-        protected void process(String fileName) throws IOException {
-            final CharStream inputStream = CharStreams.fromFileName(fileName);
-            final com.github.forestbelton.glua.LuaLexer lexer = new LuaLexer(inputStream);
-            final CommonTokenStream tokens = new CommonTokenStream(lexer);
-            final LuaParser parser = new LuaParser(tokens);
-
-            // TODO: Transform and store
+        @Override
+        protected void onRequireCall(RequireCall requireCall) {
+            final Module dependency = Module.builder().fileName(requireCall.requirePath).build();
+            dependencies.add(dependency);
         }
     }
 }
-*/

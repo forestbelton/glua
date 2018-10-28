@@ -3,6 +3,8 @@ package com.github.forestbelton.glua.app;
 import com.github.forestbelton.glua.model.Module;
 import com.github.forestbelton.glua.service.dependency.DependencyService;
 import com.github.forestbelton.glua.service.dependency.DependencyServiceImpl;
+import com.github.forestbelton.glua.service.resolution.ResolutionService;
+import com.github.forestbelton.glua.service.resolution.ResolutionServiceImpl;
 import com.github.forestbelton.glua.service.scanner.ScannerService;
 import com.github.forestbelton.glua.service.scanner.ScannerServiceImpl;
 import org.apache.commons.collections4.IteratorUtils;
@@ -17,20 +19,22 @@ import org.apache.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-//import java.util.logging.Logger;
-//TODO: clean up places where bea commented because she's a noob :) 
+import java.util.HashMap;
 
 public class Glua implements Runnable {
     private final GluaSettings settings;
     private final ScannerService scannerService;
     private final DependencyService dependencyService;
+    private final ResolutionService resolutionService;
 
     private static final Logger logger = LogManager.getLogger(Glua.class);
-
-    public Glua(GluaSettings settings, ScannerService scannerService, DependencyService dependencyService) {
+    
+    public Glua(GluaSettings settings, ScannerService scannerService, DependencyService dependencyService,
+                ResolutionService resolutionService) {
         this.settings = settings;
         this.scannerService = scannerService;
         this.dependencyService = dependencyService;
+        this.resolutionService = resolutionService;
     }
 
     public static void main(String[] args) {
@@ -40,7 +44,9 @@ public class Glua implements Runnable {
                 .outputFileName("C:\\Users\\case\\Desktop\\sample\\combined.lua")
                 .build();
 
-        final Glua glua = new Glua(settings, new ScannerServiceImpl(), new DependencyServiceImpl());
+        final Glua glua = new Glua(settings, new ScannerServiceImpl(), new DependencyServiceImpl(),
+                new ResolutionServiceImpl());
+
         glua.run();
     }
 
@@ -49,7 +55,6 @@ public class Glua implements Runnable {
         try (final PrintStream outputStream = new PrintStream(new File(settings.outputFileName))) {
             run(outputStream);
         } catch (IOException ex) {
-            //ex.printStackTrace(System.err);
             logger.warn(ex);
         }
     }
@@ -67,22 +72,27 @@ public class Glua implements Runnable {
             for (Module dependency : dependencies) {
                 dependencyGraph.addVertex(dependency);
                 dependencyGraph.addEdge(module, dependency);
+                System.out.printf("%s -> %s\n", module.fileName, dependency.fileName);
             }
         }
 
         final TopologicalOrderIterator<Module, DefaultEdge> ordering = new TopologicalOrderIterator<>(dependencyGraph);
         final Module[] orderedModules = IteratorUtils.toArray(ordering, Module.class);
 
+        final HashMap<String, Integer> addedModules = new HashMap<>();
+        int nextModuleId = 0;
+
         outputStream.println("local _MODULES = {}\n");
         for (int moduleIndex = 0; moduleIndex < orderedModules.length; ++moduleIndex) {
             final Module module = orderedModules[moduleIndex];
 
-            outputStream.println("table.insert(_MODULES, (function()\n");
-            outputStream.println(module.contents());
-            outputStream.println("end)())\n");
+            if (!addedModules.containsKey(module.fileName)) {
+                outputStream.println("table.insert(_MODULES, (function()\n");
+                outputStream.println(resolutionService.resolveDependencies(module, addedModules));
+                outputStream.println("end)())\n");
 
-            // TODO: Replace all require() calls with references to state
-            // TODO: Wrap module contents and put in state
+                addedModules.put(module.fileName, nextModuleId++);
+            }
         }
     }
 }
