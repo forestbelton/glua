@@ -3,6 +3,8 @@ package com.github.forestbelton.glua.helper.lua;
 import com.github.forestbelton.glua.LuaBaseListener;
 import com.github.forestbelton.glua.LuaParser;
 import com.github.forestbelton.glua.model.RequireCall;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +17,7 @@ import java.util.regex.Pattern;
 /** A listener that provides a callback for require() calls. */
 public class LuaRequireCallBaseListener extends LuaBaseListener {
 
+    private static final Logger logger = LogManager.getLogger(LuaRequireCallBaseListener.class);
     private static final Pattern requirePattern = Pattern.compile("^require\\([\"'](\\.{1,2}/[^\"'\\\\]+)[\"']\\)$");
 
     private final String baseDirectory;
@@ -64,7 +67,7 @@ public class LuaRequireCallBaseListener extends LuaBaseListener {
                 requireCalls.add(requireCall);
                 this.onRequireCall(requireCall);
             } catch (IOException ex) {
-                ex.printStackTrace();
+                logger.error("failed to locate require() call", ex);
             }
         }
     }

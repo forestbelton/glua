@@ -4,6 +4,8 @@ import com.github.forestbelton.glua.helper.lua.LuaParsingHelper;
 import com.github.forestbelton.glua.helper.lua.LuaRequireCallBaseListener;
 import com.github.forestbelton.glua.model.Module;
 import com.github.forestbelton.glua.model.RequireCall;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -11,12 +13,15 @@ import java.util.List;
 import java.util.Map;
 
 public class ResolutionServiceImpl implements ResolutionService {
+
+    private static final Logger logger = LogManager.getLogger(ResolutionServiceImpl.class);
+
     @Override
     public String resolveDependencies(Module module, Map<String, Integer> moduleMap) {
         // TODO: Throw exception instead
         String moduleContents = "<ERROR>";
 
-        System.out.println("resolving dependencies for: " + module.fileName);
+        logger.info("resolving dependencies for {}", module.fileName);
         try {
             final String fileDirectoryName = Paths.get(module.fileName).getParent().toString();
             final LuaRequireCallBaseListener listener = new LuaRequireCallBaseListener(fileDirectoryName);
@@ -37,8 +42,7 @@ public class ResolutionServiceImpl implements ResolutionService {
                 final String callText = module.contents().substring(requireCall.charStartIndex, requireCall.charStartIndex
                         + requireCall.requireCallLength);
 
-                System.out.println("resolving call " + callText + " to " + resolvedName);
-
+                logger.info("resolving call {} to {}", callText, resolvedName);
                 lastEndIndex = requireCall.charStartIndex + requireCall.requireCallLength + 1;
             }
 
@@ -46,7 +50,7 @@ public class ResolutionServiceImpl implements ResolutionService {
             outputBuilder.append(tail);
             moduleContents = outputBuilder.toString();
         } catch (IOException ex) {
-            ex.printStackTrace();
+            logger.error("failed to resolve dependencies", ex);
         }
 
         return moduleContents;

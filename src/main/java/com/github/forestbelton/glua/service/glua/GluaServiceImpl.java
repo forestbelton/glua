@@ -6,6 +6,8 @@ import com.github.forestbelton.glua.service.dependency.DependencyService;
 import com.github.forestbelton.glua.service.resolution.ResolutionService;
 import com.github.forestbelton.glua.service.scanner.ScannerService;
 import org.apache.commons.collections4.IteratorUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
@@ -14,6 +16,9 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 import java.util.HashMap;
 
 public class GluaServiceImpl implements GluaService {
+
+    private static final Logger logger = LogManager.getLogger(GluaServiceImpl.class);
+
     private final ScannerService scannerService;
     private final DependencyService dependencyService;
     private final ResolutionService resolutionService;
@@ -33,12 +38,14 @@ public class GluaServiceImpl implements GluaService {
         for (Module module : scannerService.scanDirectory(settings.directoryName)) {
             final Iterable<Module> dependencies = dependencyService.findDependencies(module);
 
-            System.out.println("adding source file: " + module.fileName);
+            logger.info("adding source file {}", module.fileName);
             dependencyGraph.addVertex(module);
+
             for (Module dependency : dependencies) {
+                logger.info("establishing dependency {} -> {}", module.fileName, dependency.fileName);
+
                 dependencyGraph.addVertex(dependency);
                 dependencyGraph.addEdge(module, dependency);
-                System.out.printf("%s -> %s\n", module.fileName, dependency.fileName);
             }
         }
 

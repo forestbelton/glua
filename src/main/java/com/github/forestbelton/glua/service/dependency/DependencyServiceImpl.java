@@ -4,6 +4,8 @@ import com.github.forestbelton.glua.helper.lua.LuaParsingHelper;
 import com.github.forestbelton.glua.helper.lua.LuaRequireCallBaseListener;
 import com.github.forestbelton.glua.model.Module;
 import com.github.forestbelton.glua.model.RequireCall;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -11,11 +13,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class DependencyServiceImpl implements DependencyService {
+
+    private static final Logger logger = LogManager.getLogger(DependencyServiceImpl.class);
+
     @Override
     public Iterable<Module> findDependencies(Module module) {
         Iterable<Module> dependencies = Collections.emptyList();
 
-        System.out.println("reading dependencies for: " + module.fileName);
+        logger.info("reading dependencies for {}", module.fileName);
         try {
             final String fileDirectoryName = Paths.get(module.fileName).getParent().toString();
             final DependencyListener listener = new DependencyListener(fileDirectoryName);
@@ -23,7 +28,7 @@ public class DependencyServiceImpl implements DependencyService {
             LuaParsingHelper.parseWithListener(module, listener);
             dependencies = listener.dependencies();
         } catch (IOException ex) {
-            ex.printStackTrace();
+            logger.error("failed to find dependencies", ex);
         }
 
         return dependencies;
