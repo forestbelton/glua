@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
-import java.util.HashSet;
 
 public class Glua implements Runnable {
     private final GluaSettings settings;
