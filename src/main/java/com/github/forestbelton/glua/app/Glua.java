@@ -13,6 +13,9 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -24,6 +27,8 @@ public class Glua implements Runnable {
     private final DependencyService dependencyService;
     private final ResolutionService resolutionService;
 
+    private static final Logger logger = LogManager.getLogger(Glua.class);
+    
     public Glua(GluaSettings settings, ScannerService scannerService, DependencyService dependencyService,
                 ResolutionService resolutionService) {
         this.settings = settings;
@@ -50,7 +55,7 @@ public class Glua implements Runnable {
         try (final PrintStream outputStream = new PrintStream(new File(settings.outputFileName))) {
             run(outputStream);
         } catch (IOException ex) {
-            ex.printStackTrace();
+            logger.warn(ex);
         }
     }
 
@@ -61,7 +66,7 @@ public class Glua implements Runnable {
         for (Module module : scannerService.scanDirectory(settings.directoryName)) {
             final Iterable<Module> dependencies = dependencyService.findDependencies(module);
 
-            System.out.println("adding source file: " + module.fileName);
+            logger.info("adding source file: " + module.fileName);
             dependencyGraph.addVertex(module);
             for (Module dependency : dependencies) {
                 dependencyGraph.addVertex(dependency);
