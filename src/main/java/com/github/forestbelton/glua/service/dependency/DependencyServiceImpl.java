@@ -20,7 +20,7 @@ public class DependencyServiceImpl implements DependencyService {
             final String fileDirectoryName = Paths.get(module.fileName).getParent().toString();
             final DependencyListener listener = new DependencyListener(fileDirectoryName);
 
-            LuaParsingHelper.parseWithListener(module.fileName, listener);
+            LuaParsingHelper.parseWithListener(module, listener);
             dependencies = listener.dependencies();
         } catch (IOException ex) {
             ex.printStackTrace();

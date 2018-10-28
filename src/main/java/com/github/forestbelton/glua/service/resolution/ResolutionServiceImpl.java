@@ -21,7 +21,7 @@ public class ResolutionServiceImpl implements ResolutionService {
             final String fileDirectoryName = Paths.get(module.fileName).getParent().toString();
             final LuaRequireCallBaseListener listener = new LuaRequireCallBaseListener(fileDirectoryName);
 
-            LuaParsingHelper.parseWithListener(module.fileName, listener);
+            LuaParsingHelper.parseWithListener(module, listener);
             final List<RequireCall> requireCalls = listener.requireCalls();
 
             final StringBuilder outputBuilder = new StringBuilder();
