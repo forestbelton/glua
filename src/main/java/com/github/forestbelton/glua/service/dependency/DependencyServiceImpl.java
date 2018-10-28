@@ -1,6 +1,5 @@
 package com.github.forestbelton.glua.service.dependency;
 
-import com.github.forestbelton.glua.LuaBaseListener;
 import com.github.forestbelton.glua.LuaLexer;
 import com.github.forestbelton.glua.LuaParser;
 import com.github.forestbelton.glua.model.Module;
@@ -9,6 +8,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Collections;
 
 public class DependencyServiceImpl implements DependencyService {
@@ -17,33 +17,23 @@ public class DependencyServiceImpl implements DependencyService {
         Iterable<Module> dependencies = Collections.emptyList();
 
         try {
+            System.out.println("reading dependencies for: " + module.fileName);
+
             final LuaLexer lexer = new LuaLexer(CharStreams.fromFileName(module.fileName));
             final CommonTokenStream tokens = new CommonTokenStream(lexer);
             final LuaParser parser = new LuaParser(tokens);
-            final LuaParser.ChunkContext fileChunk = parser.chunk();
+            final LuaParser.BlockContext context = parser.block();
 
             final ParseTreeWalker walker = new ParseTreeWalker();
-            final DependencyListener listener = new DependencyListener();
+            final String fileDirectoryName = Paths.get(module.fileName).getParent().toString();
+            final DependencyListener listener = new DependencyListener(fileDirectoryName);
 
-            walker.walk(listener, fileChunk);
+            walker.walk(listener, context);
             dependencies = listener.dependencies();
         } catch (IOException ex) {
             ex.printStackTrace();
         }
 
         return dependencies;
-    }
-
-    private static class DependencyListener extends LuaBaseListener {
-        public Iterable<Module> dependencies() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public void enterFunctioncall(LuaParser.FunctioncallContext ctx) {
-            final String functionName = ctx.varOrExp().var().NAME().getText();
-
-            System.out.printf("found function call, function = %s\n", functionName);
-        }
     }
 }

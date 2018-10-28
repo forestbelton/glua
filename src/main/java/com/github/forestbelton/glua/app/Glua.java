@@ -68,12 +68,10 @@ public class Glua implements Runnable {
         for (int moduleIndex = 0; moduleIndex < orderedModules.length; ++moduleIndex) {
             final Module module = orderedModules[moduleIndex];
 
+            // TODO: Replace all require() calls with references to state
             outputStream.println("table.insert(_MODULES, (function()\n");
             outputStream.println(module.contents());
             outputStream.println("end)())\n");
-
-            // TODO: Replace all require() calls with references to state
-            // TODO: Wrap module contents and put in state
         }
     }
 }
