@@ -37,7 +37,7 @@ local A = require('./A')
 print(A.inc(0))
 ```
 
-After running `glua src combined.lua`, I would receive the following output in `combined.lua`:
+After running `glua src combined.lua`, `combined.lua` would contain:
 ```lua
 local _MODULES = {}
 
