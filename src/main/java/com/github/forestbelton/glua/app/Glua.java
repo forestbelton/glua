@@ -14,6 +14,7 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class Glua implements Runnable {
@@ -65,19 +66,19 @@ public class Glua implements Runnable {
 
         final TopologicalOrderIterator<Module, DefaultEdge> ordering = new TopologicalOrderIterator<>(dependencyGraph);
         final Module[] orderedModules = IteratorUtils.toArray(ordering, Module.class);
-        final HashSet<String> addedModules = new HashSet<>();
+        final HashMap<String, Integer> addedModules = new HashMap<>();
 
         outputStream.println("local _MODULES = {}\n");
         for (int moduleIndex = 0; moduleIndex < orderedModules.length; ++moduleIndex) {
             final Module module = orderedModules[moduleIndex];
 
-            if (!addedModules.contains(module.fileName)) {
+            if (!addedModules.containsKey(module.fileName)) {
                 // TODO: Replace all require() calls with references to state
                 outputStream.println("table.insert(_MODULES, (function()\n");
                 outputStream.println(module.contents());
                 outputStream.println("end)())\n");
 
-                addedModules.add(module.fileName);
+                addedModules.put(module.fileName, moduleIndex);
             }
         }
     }
