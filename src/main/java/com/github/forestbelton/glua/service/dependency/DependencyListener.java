@@ -41,7 +41,6 @@ public class DependencyListener extends LuaBaseListener {
                 final Module dependencyModule = Module.builder().fileName(canonicalRequirePath).build();
 
                 dependencies.add(dependencyModule);
-                System.out.println("added dependency: " + canonicalRequirePath);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
