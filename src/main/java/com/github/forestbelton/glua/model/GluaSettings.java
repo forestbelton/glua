@@ -1,12 +1,16 @@
-package com.github.forestbelton.glua.app;
+package com.github.forestbelton.glua.model;
+
+import java.io.PrintStream;
 
 public class GluaSettings {
     public final String directoryName;
     public final String outputFileName;
+    public final PrintStream outputStream;
 
-    protected GluaSettings(String directoryName, String outputFileName) {
+    protected GluaSettings(String directoryName, String outputFileName, PrintStream outputStream) {
         this.directoryName = directoryName;
         this.outputFileName = outputFileName;
+        this.outputStream = outputStream;
     }
 
     public static Builder builder() {
@@ -16,6 +20,7 @@ public class GluaSettings {
     public static class Builder {
         private String directoryName;
         private String outputFileName;
+        private PrintStream outputStream;
 
         public Builder directoryName(String directoryName) {
             this.directoryName = directoryName;
@@ -27,8 +32,13 @@ public class GluaSettings {
             return this;
         }
 
+        public Builder outputStream(PrintStream outputStream) {
+            this.outputStream = outputStream;
+            return this;
+        }
+
         public GluaSettings build() {
-            return new GluaSettings(directoryName, outputFileName);
+            return new GluaSettings(directoryName, outputFileName, outputStream);
         }
     }
 }
