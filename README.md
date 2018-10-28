@@ -18,7 +18,7 @@ resolves calls to require() and combines output into a single lua file
 Example
 -------
 
-Imagine I have two files, `src/A.lua` and `src/B.lua`. Here are there contents:
+Imagine there are two files `src/A.lua` and `src/B.lua` with the following contents:
 
 `src/A.lua`:
 ```lua
