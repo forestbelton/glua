@@ -14,45 +14,47 @@ import java.util.Map;
 
 public class ResolutionServiceImpl implements ResolutionService {
 
-    private static final Logger logger = LogManager.getLogger(ResolutionServiceImpl.class);
+  private static final Logger logger = LogManager.getLogger(ResolutionServiceImpl.class);
 
-    @Override
-    public String resolveDependencies(Module module, Map<String, Integer> moduleMap) {
-        // TODO: Throw exception instead
-        String moduleContents = "<ERROR>";
+  @Override
+  public String resolveDependencies(Module module, Map<String, Integer> moduleMap) {
+    // TODO: Throw exception instead
+    String moduleContents = "<ERROR>";
 
-        logger.info("resolving dependencies for {}", module.fileName);
-        try {
-            final String fileDirectoryName = Paths.get(module.fileName).getParent().toString();
-            final LuaRequireCallBaseListener listener = new LuaRequireCallBaseListener(fileDirectoryName);
+    logger.info("resolving dependencies for {}", module.fileName);
+    try {
+      final var fileDirectoryName = Paths.get(module.fileName).getParent().toString();
+      final var listener = new LuaRequireCallBaseListener(fileDirectoryName);
 
-            LuaParsingHelper.parseWithListener(module, listener);
-            final List<RequireCall> requireCalls = listener.requireCalls();
+      LuaParsingHelper.parseWithListener(module, listener);
+      final List<RequireCall> requireCalls = listener.requireCalls();
 
-            final StringBuilder outputBuilder = new StringBuilder();
-            int lastEndIndex = 0;
+      final var outputBuilder = new StringBuilder();
+      var lastEndIndex = 0;
 
-            for (RequireCall requireCall : requireCalls) {
-                final String upToHere = module.contents().substring(lastEndIndex, requireCall.charStartIndex);
-                final String resolvedName = String.format("_MODULE[%d]", moduleMap.get(requireCall.requirePath));
+      for (var requireCall : requireCalls) {
+        final var upToHere = module.contents().substring(lastEndIndex,
+            requireCall.charStartIndex);
+        final var resolvedName = String.format("_MODULE[%d]",
+            moduleMap.get(requireCall.requirePath));
 
-                outputBuilder.append(upToHere);
-                outputBuilder.append(resolvedName);
+        outputBuilder.append(upToHere);
+        outputBuilder.append(resolvedName);
 
-                final String callText = module.contents().substring(requireCall.charStartIndex, requireCall.charStartIndex
-                        + requireCall.requireCallLength);
+        final var callText = module.contents().substring(requireCall.charStartIndex,
+            requireCall.charStartIndex + requireCall.requireCallLength);
 
-                logger.info("resolving call {} to {}", callText, resolvedName);
-                lastEndIndex = requireCall.charStartIndex + requireCall.requireCallLength + 1;
-            }
+        logger.info("resolving call {} to {}", callText, resolvedName);
+        lastEndIndex = requireCall.charStartIndex + requireCall.requireCallLength + 1;
+      }
 
-            final String tail = module.contents().substring(lastEndIndex);
-            outputBuilder.append(tail);
-            moduleContents = outputBuilder.toString();
-        } catch (IOException ex) {
-            logger.error("failed to resolve dependencies", ex);
-        }
-
-        return moduleContents;
+      final var tail = module.contents().substring(lastEndIndex);
+      outputBuilder.append(tail);
+      moduleContents = outputBuilder.toString();
+    } catch (IOException ex) {
+      logger.error("failed to resolve dependencies", ex);
     }
+
+    return moduleContents;
+  }
 }

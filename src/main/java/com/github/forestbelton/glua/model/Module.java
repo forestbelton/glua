@@ -1,47 +1,59 @@
 package com.github.forestbelton.glua.model;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
 public class Module {
-    public final String fileName;
-    protected String contents;
 
-    protected Module(String fileName) {
-        this.fileName = fileName;
+  private static final Logger logger = LogManager.getLogger(Module.class);
+
+  public final String fileName;
+  protected String contents;
+
+  protected Module(String fileName) {
+    this.fileName = fileName;
+  }
+
+  public String name() {
+    return fileName.replaceAll("[^A-Za-z0-9_]+", "_");
+  }
+
+  /**
+   * Retrieve the source code of the module.
+   *
+   * @return The source code
+   */
+  public String contents() {
+    if (this.contents == null) {
+      try {
+        this.contents = FileUtils.readFileToString(new File(fileName), Charset.defaultCharset());
+      } catch (IOException ex) {
+        logger.error("failed to retrieve module contents", ex);
+      }
     }
 
-    public String name() {
-        return fileName.replaceAll("[^A-Za-z0-9_]+", "_");
+    return this.contents;
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+    private String fileName;
+
+    public Builder fileName(String fileName) {
+      this.fileName = fileName;
+      return this;
     }
 
-    public String contents() {
-        if (this.contents == null) {
-            try {
-                this.contents = FileUtils.readFileToString(new File(fileName), Charset.defaultCharset());
-            } catch (IOException ex) {}
-        }
-
-        return this.contents;
+    public Module build() {
+      return new Module(fileName);
     }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-        private String fileName;
-
-        public Builder fileName(String fileName) {
-            this.fileName = fileName;
-            return this;
-        }
-
-        public Module build() {
-            return new Module(fileName);
-        }
-    }
+  }
 }

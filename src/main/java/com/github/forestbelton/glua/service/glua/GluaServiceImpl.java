@@ -8,7 +8,6 @@ import com.github.forestbelton.glua.service.scanner.ScannerService;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.jgrapht.traverse.TopologicalOrderIterator;
@@ -17,55 +16,61 @@ import java.util.HashMap;
 
 public class GluaServiceImpl implements GluaService {
 
-    private static final Logger logger = LogManager.getLogger(GluaServiceImpl.class);
+  private static final Logger logger = LogManager.getLogger(GluaServiceImpl.class);
 
-    private final ScannerService scannerService;
-    private final DependencyService dependencyService;
-    private final ResolutionService resolutionService;
+  private final ScannerService scannerService;
+  private final DependencyService dependencyService;
+  private final ResolutionService resolutionService;
 
-    public GluaServiceImpl(ScannerService scannerService, DependencyService dependencyService,
-                           ResolutionService resolutionService) {
-        this.scannerService = scannerService;
-        this.dependencyService = dependencyService;
-        this.resolutionService = resolutionService;
+  /**
+   * Create a new {@link GluaServiceImpl}.
+   * @param scannerService The {@link ScannerService} to use
+   * @param dependencyService The {@link DependencyService} to use
+   * @param resolutionService The {@link ResolutionService} to use
+   */
+  public GluaServiceImpl(ScannerService scannerService, DependencyService dependencyService,
+                         ResolutionService resolutionService) {
+    this.scannerService = scannerService;
+    this.dependencyService = dependencyService;
+    this.resolutionService = resolutionService;
+  }
+
+  @Override
+  public void run(GluaSettings settings) {
+    final var dependencyGraph = new SimpleDirectedGraph<Module, DefaultEdge>(DefaultEdge.class);
+
+    // TODO: Instead of calling ScannerService::scanDirectory, do DFS on an entrypoint
+    for (var module : scannerService.scanDirectory(settings.directoryName)) {
+      final var dependencies = dependencyService.findDependencies(module);
+
+      logger.info("adding source file {}", module.fileName);
+      dependencyGraph.addVertex(module);
+
+      for (Module dependency : dependencies) {
+        logger.info("establishing dependency {} -> {}", module.fileName, dependency.fileName);
+
+        dependencyGraph.addVertex(dependency);
+        dependencyGraph.addEdge(module, dependency);
+      }
     }
 
-    @Override
-    public void run(GluaSettings settings) {
-        final Graph<Module, DefaultEdge> dependencyGraph = new SimpleDirectedGraph<>(DefaultEdge.class);
+    final var ordering = new TopologicalOrderIterator<>(dependencyGraph);
+    final var orderedModules = IteratorUtils.toArray(ordering, Module.class);
 
-        // TODO: Instead of calling ScannerService::scanDirectory, do DFS on an entrypoint
-        for (Module module : scannerService.scanDirectory(settings.directoryName)) {
-            final Iterable<Module> dependencies = dependencyService.findDependencies(module);
+    final var addedModules = new HashMap<String, Integer>();
+    var nextModuleId = 0;
 
-            logger.info("adding source file {}", module.fileName);
-            dependencyGraph.addVertex(module);
+    settings.outputStream.println("local _MODULES = {}\n");
+    for (var moduleIndex = 0; moduleIndex < orderedModules.length; ++moduleIndex) {
+      final var module = orderedModules[moduleIndex];
 
-            for (Module dependency : dependencies) {
-                logger.info("establishing dependency {} -> {}", module.fileName, dependency.fileName);
+      if (!addedModules.containsKey(module.fileName)) {
+        settings.outputStream.println("table.insert(_MODULES, (function()");
+        settings.outputStream.println(resolutionService.resolveDependencies(module, addedModules));
+        settings.outputStream.println("end)())\n");
 
-                dependencyGraph.addVertex(dependency);
-                dependencyGraph.addEdge(module, dependency);
-            }
-        }
-
-        final TopologicalOrderIterator<Module, DefaultEdge> ordering = new TopologicalOrderIterator<>(dependencyGraph);
-        final Module[] orderedModules = IteratorUtils.toArray(ordering, Module.class);
-
-        final HashMap<String, Integer> addedModules = new HashMap<>();
-        int nextModuleId = 0;
-
-        settings.outputStream.println("local _MODULES = {}\n");
-        for (int moduleIndex = 0; moduleIndex < orderedModules.length; ++moduleIndex) {
-            final Module module = orderedModules[moduleIndex];
-
-            if (!addedModules.containsKey(module.fileName)) {
-                settings.outputStream.println("table.insert(_MODULES, (function()");
-                settings.outputStream.println(resolutionService.resolveDependencies(module, addedModules));
-                settings.outputStream.println("end)())\n");
-
-                addedModules.put(module.fileName, nextModuleId++);
-            }
-        }
+        addedModules.put(module.fileName, nextModuleId++);
+      }
     }
+  }
 }
