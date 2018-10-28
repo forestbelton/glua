@@ -37,7 +37,7 @@ public class ResolutionServiceImpl implements ResolutionService {
                 final String callText = module.contents().substring(requireCall.charStartIndex, requireCall.charStartIndex
                         + requireCall.requireCallLength);
 
-                System.out.println(callText + " -> " + resolvedName);
+                System.out.println("resolving call " + callText + " to " + resolvedName);
 
                 lastEndIndex = requireCall.charStartIndex + requireCall.requireCallLength + 1;
             }
