@@ -60,4 +60,16 @@ public class GluaCommand implements Callable<Void> {
 
     return null;
   }
+
+  public String directoryName() {
+    return directoryName;
+  }
+
+  public String outputFile() {
+    return outputFile;
+  }
+
+  public boolean verbose() {
+    return verbose;
+  }
 }
