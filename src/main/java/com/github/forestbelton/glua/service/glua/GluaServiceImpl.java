@@ -13,6 +13,7 @@ import org.jgrapht.graph.SimpleDirectedGraph;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import java.util.HashMap;
+import javax.inject.Inject;
 
 public class GluaServiceImpl implements GluaService {
 
@@ -28,6 +29,7 @@ public class GluaServiceImpl implements GluaService {
    * @param dependencyService The {@link DependencyService} to use
    * @param resolutionService The {@link ResolutionService} to use
    */
+  @Inject
   public GluaServiceImpl(ScannerService scannerService, DependencyService dependencyService,
                          ResolutionService resolutionService) {
     this.scannerService = scannerService;

@@ -1,10 +1,7 @@
 package com.github.forestbelton.glua.app;
 
 import com.github.forestbelton.glua.model.GluaSettings;
-import com.github.forestbelton.glua.service.dependency.DependencyServiceImpl;
-import com.github.forestbelton.glua.service.glua.GluaServiceImpl;
-import com.github.forestbelton.glua.service.resolution.ResolutionServiceImpl;
-import com.github.forestbelton.glua.service.scanner.ScannerServiceImpl;
+import com.github.forestbelton.glua.service.glua.DaggerGluaService;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,9 +54,7 @@ public class Glua {
             .outputStream(outputStream)
             .build();
 
-        final var glua = new GluaServiceImpl(new ScannerServiceImpl(),
-            new DependencyServiceImpl(), new ResolutionServiceImpl());
-
+        final var glua = DaggerGluaService.create();
         glua.run(settings);
       } catch (IOException ex) {
         logger.error("glua failed to run", ex);
