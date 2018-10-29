@@ -2,12 +2,13 @@ package com.github.forestbelton.glua.app;
 
 import com.github.forestbelton.glua.model.GluaSettings;
 import com.github.forestbelton.glua.service.dependency.DependencyServiceImpl;
-import com.github.forestbelton.glua.service.glua.GluaService;
 import com.github.forestbelton.glua.service.glua.GluaServiceImpl;
 import com.github.forestbelton.glua.service.resolution.ResolutionServiceImpl;
 import com.github.forestbelton.glua.service.scanner.ScannerServiceImpl;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -25,16 +26,29 @@ public class Glua {
 
     @CommandLine.Parameters(index = "0", description = "The source directory to scan.",
         defaultValue = ".")
-    private String directoryName;
+    private String directoryName = ".";
 
     @CommandLine.Parameters(index = "1", description = "The output file to generate.",
         defaultValue = "out.lua")
-    private String outputFile;
+    private String outputFile = "out.lua";
+
+    @CommandLine.Option(names = {"-v", "--verbose"}, description = "display verbose output",
+        defaultValue = "false")
+    private boolean verbose = false;
 
     @Override
     public Void call() throws Exception {
       final var outputFileName = new File(outputFile).getCanonicalPath();
       final var searchDirectoryName = new File(directoryName).getCanonicalPath();
+
+      if (verbose) {
+        final var ctx = (LoggerContext) LogManager.getContext(false);
+        final var config = ctx.getConfiguration();
+        final var loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+
+        loggerConfig.setLevel(Level.INFO);
+        ctx.updateLoggers();
+      }
 
       try (final PrintStream outputStream = new PrintStream(new File(outputFileName))) {
         final var settings = GluaSettings.builder()
