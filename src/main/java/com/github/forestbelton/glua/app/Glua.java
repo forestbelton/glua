@@ -32,7 +32,7 @@ public class Glua {
         defaultValue = "out.lua")
     private String outputFile = "out.lua";
 
-    @CommandLine.Option(names = {"-v", "--verbose"}, description = "display verbose output",
+    @CommandLine.Option(names = {"-v", "--verbose"}, description = "Display verbose output.",
         defaultValue = "false")
     private boolean verbose = false;
 
