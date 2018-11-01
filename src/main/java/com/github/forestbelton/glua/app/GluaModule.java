@@ -6,8 +6,6 @@ import com.github.forestbelton.glua.service.glua.GluaService;
 import com.github.forestbelton.glua.service.glua.GluaServiceImpl;
 import com.github.forestbelton.glua.service.resolution.ResolutionService;
 import com.github.forestbelton.glua.service.resolution.ResolutionServiceImpl;
-import com.github.forestbelton.glua.service.scanner.ScannerService;
-import com.github.forestbelton.glua.service.scanner.ScannerServiceImpl;
 import dagger.Module;
 import dagger.Provides;
 
@@ -21,11 +19,8 @@ public class GluaModule {
     return new ResolutionServiceImpl();
   }
 
-  @Provides static ScannerService scannerService() {
-    return new ScannerServiceImpl();
-  }
-
-  @Provides static GluaService gluaService(DependencyService dependencyService, ResolutionService resolutionService, ScannerService scannerService) {
-    return new GluaServiceImpl(scannerService, dependencyService, resolutionService);
+  @Provides static GluaService gluaService(DependencyService dependencyService,
+                                           ResolutionService resolutionService) {
+    return new GluaServiceImpl(dependencyService, resolutionService);
   }
 }

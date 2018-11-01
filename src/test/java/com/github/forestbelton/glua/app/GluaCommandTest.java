@@ -20,7 +20,7 @@ public class GluaCommandTest extends TestCase {
     final var command = mock(GluaCommand.class);
 
     doNothing().when(command).call();
-    CommandLine.call(command, "src");
+    CommandLine.call(command, "-e=test");
 
     verify(command).call();
     assertFalse("verbose flag not set by default", command.verbose());
@@ -30,7 +30,7 @@ public class GluaCommandTest extends TestCase {
     final var command = mock(GluaCommand.class);
 
     doNothing().when(command).call();
-    CommandLine.call(command, "-v", "src");
+    CommandLine.call(command, "-v", "-e=test");
 
     verify(command).call();
     // TODO: Fix
@@ -39,7 +39,7 @@ public class GluaCommandTest extends TestCase {
 
   public void testVerboseWithLongFlag() throws Exception {
     final var command = mock(GluaCommand.class);
-    CommandLine.call(command, "--verbose", "src");
+    CommandLine.call(command, "--verbose", "-e=test");
 
     verify(command).call();
     // TODO: Fix

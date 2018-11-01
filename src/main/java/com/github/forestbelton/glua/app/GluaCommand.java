@@ -14,16 +14,17 @@ import java.io.PrintStream;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "glua",
-    description = "resolves calls to require() and combines output into a single lua file",
+    description = "Resolves calls to require() and combines output into a single Lua file.",
     mixinStandardHelpOptions = true)
 public class GluaCommand implements Callable<Void> {
   private static final String GLUA_DEBUG_ENV_VAR = "GLUA_DEBUG";
   private static final Logger logger = LogManager.getLogger(GluaCommand.class);
 
-  @CommandLine.Parameters(index = "0", description = "The source directory to scan.")
-  private String directoryName = ".";
+  @CommandLine.Option(names = {"-e", "--entry"}, required = true,
+      description = "The entry point for the application.")
+  private String entryPoint;
 
-  @CommandLine.Parameters(index = "1", description = "The output file to generate.",
+  @CommandLine.Parameters(index = "0", description = "The output file to generate.",
       defaultValue = "out.lua")
   private String outputFile = "out.lua";
 
@@ -34,7 +35,7 @@ public class GluaCommand implements Callable<Void> {
   @Override
   public Void call() throws Exception {
     final var outputFileName = new File(outputFile).getCanonicalPath();
-    final var searchDirectoryName = new File(directoryName).getCanonicalPath();
+    final var entryPointPath = new File(entryPoint).getCanonicalPath();
     final var ctx = (LoggerContext) LogManager.getContext(false);
     final var config = ctx.getConfiguration();
     final var loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
@@ -51,14 +52,15 @@ public class GluaCommand implements Callable<Void> {
 
     try (final PrintStream outputStream = new PrintStream(new File(outputFileName))) {
       final var settings = GluaSettings.builder()
-          .directoryName(searchDirectoryName)
+          .entryPoint(entryPointPath)
           .outputFileName(outputFileName)
           .outputStream(outputStream)
           .build();
 
-      final var glua = DaggerGluaFactory.create().glua();
+      logger.debug("starting glua; entryPoint={}, outputFileName={}", settings.entryPoint,
+          settings.outputFileName);
 
-      logger.debug("starting glua; directoryName={}, outputFileName={}", settings.directoryName, settings.outputFileName);
+      final var glua = DaggerGluaFactory.create().glua();
       glua.run(settings);
     } catch (IOException ex) {
       logger.error("glua failed to run", ex);
@@ -67,8 +69,8 @@ public class GluaCommand implements Callable<Void> {
     return null;
   }
 
-  public String directoryName() {
-    return directoryName;
+  public String entryPoint() {
+    return entryPoint;
   }
 
   public String outputFile() {
