@@ -59,6 +59,14 @@ public class GluaServiceImpl implements GluaService {
     final var ordering = new TopologicalOrderIterator<>(dependencyGraph);
     final var orderedModules = IteratorUtils.toArray(ordering, Module.class);
 
+    logger.debug("dependency graph:");
+    for (var edge : dependencyGraph.edgeSet()) {
+      var source = dependencyGraph.getEdgeSource(edge);
+      var target = dependencyGraph.getEdgeTarget(edge);
+
+      logger.info("{} -> {}", source.name(), target.name());
+    }
+
     final var addedModules = new HashMap<String, Integer>();
     var nextModuleId = 0;
 
