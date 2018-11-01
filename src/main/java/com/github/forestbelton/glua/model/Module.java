@@ -23,6 +23,17 @@ public class Module {
     return fileName.replaceAll("[^A-Za-z0-9_]+", "_");
   }
 
+  @Override
+  public boolean equals(Object other) {
+    return other instanceof Module
+        && name().equals(((Module)other).name());
+  }
+
+  @Override
+  public int hashCode() {
+    return name().hashCode();
+  }
+
   /**
    * Retrieve the source code of the module.
    *
