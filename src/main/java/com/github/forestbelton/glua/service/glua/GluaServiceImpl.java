@@ -4,6 +4,8 @@ import com.github.forestbelton.glua.model.GluaSettings;
 import com.github.forestbelton.glua.model.Module;
 import com.github.forestbelton.glua.service.dependency.DependencyService;
 import com.github.forestbelton.glua.service.resolution.ResolutionService;
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,9 +13,9 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.*;
 import javax.inject.Inject;
 
 public class GluaServiceImpl implements GluaService {
@@ -71,26 +73,66 @@ public class GluaServiceImpl implements GluaService {
       var source = dependencyGraph.getEdgeSource(edge);
       var target = dependencyGraph.getEdgeTarget(edge);
 
-      logger.info("{} -> {}", source.name(), target.name());
+      logger.debug("{} -> {}", source.name(), target.name());
     }
 
-    final var addedModules = new HashMap<String, Integer>();
-    var nextModuleId = 0;
+    final var mustacheFactory = new DefaultMustacheFactory();
+    final var mustache = mustacheFactory.compile("output.mustache");
+    final var data = new OutputModules(orderedModules, resolutionService);
 
-    // NOTE: Last module in the ordering will be the entry point, so it is skipped here
-    settings.outputStream.println("local _MODULES = {}\n");
-    for (var moduleIndex = 0; moduleIndex < orderedModules.length - 1; ++moduleIndex) {
-      final var module = orderedModules[moduleIndex];
+    try {
+      mustache.execute(new PrintWriter(settings.outputStream), data).flush();
+      logger.info("wrote output to {}", settings.outputFileName);
+    } catch (IOException ex) {
+      logger.error("failed to write output file", ex);
+    }
+  }
 
-      if (!addedModules.containsKey(module.fileName)) {
-        settings.outputStream.println("table.insert(_MODULES, (function()");
-        settings.outputStream.println(resolutionService.resolveDependencies(module, addedModules));
-        settings.outputStream.println("end)())\n");
+  private static class OutputModules {
+    private final Module[] orderedModules;
+    private final ResolutionService resolutionService;
+    private final List<String> modules;
+    private boolean initialized;
+    private String entryPoint;
 
-        addedModules.put(module.fileName, nextModuleId++);
+    public OutputModules(Module[] orderedModules, ResolutionService resolutionService) {
+      this.orderedModules = orderedModules;
+      this.resolutionService = resolutionService;
+
+      this.modules = new ArrayList<>();
+      this.initialized = false;
+    }
+
+    private void initialize() {
+      if (!initialized) {
+        final var moduleIndexes = new HashMap<String, Integer>();
+        var nextModuleIndex = 0;
+
+        // NOTE: Last module in the ordering will be the entry point, so it is skipped here
+        for (var moduleIndex = 0; moduleIndex < orderedModules.length - 1; ++moduleIndex) {
+          final var module = orderedModules[moduleIndex];
+
+          if (!moduleIndexes.containsKey(module.fileName)) {
+            modules.add(resolutionService.resolveDependencies(module, moduleIndexes));
+            moduleIndexes.put(module.fileName, nextModuleIndex++);
+          }
+        }
+
+        final var entryPointModule = orderedModules[orderedModules.length - 1];
+        entryPoint = resolutionService.resolveDependencies(entryPointModule, moduleIndexes);
       }
+
+      initialized = true;
     }
 
-    settings.outputStream.println(resolutionService.resolveDependencies(entryPoint, addedModules));
+    public List<String> modules() {
+      initialize();
+      return modules;
+    }
+
+    public String entryPoint() {
+      initialize();
+      return entryPoint;
+    }
   }
 }

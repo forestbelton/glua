@@ -1,0 +1,10 @@
+-- Application dependencies
+local _MODULES = {}
+{{#modules}}
+    table.insert(_MODULES, (function()
+{{{.}}}
+    end)())
+{{/modules}}
+
+-- Application entry point
+{{{entryPoint}}}
