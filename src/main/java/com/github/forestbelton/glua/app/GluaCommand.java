@@ -1,7 +1,7 @@
 package com.github.forestbelton.glua.app;
 
 import com.github.forestbelton.glua.model.GluaSettings;
-import com.github.forestbelton.glua.service.glua.DaggerGluaService;
+import com.github.forestbelton.glua.service.glua.DaggerGluaFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,8 +19,7 @@ import java.util.concurrent.Callable;
 public class GluaCommand implements Callable<Void> {
   private static final Logger logger = LogManager.getLogger(GluaCommand.class);
 
-  @CommandLine.Parameters(index = "0", description = "The source directory to scan.",
-      defaultValue = ".")
+  @CommandLine.Parameters(index = "0", description = "The source directory to scan.")
   private String directoryName = ".";
 
   @CommandLine.Parameters(index = "1", description = "The output file to generate.",
@@ -52,7 +51,9 @@ public class GluaCommand implements Callable<Void> {
           .outputStream(outputStream)
           .build();
 
-      final var glua = DaggerGluaService.create();
+      final var glua = DaggerGluaFactory.create().glua();
+
+      logger.debug("starting glua; directoryName={}, outputFileName={}", settings.directoryName, settings.outputFileName);
       glua.run(settings);
     } catch (IOException ex) {
       logger.error("glua failed to run", ex);

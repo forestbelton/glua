@@ -20,30 +20,29 @@ public class GluaCommandTest extends TestCase {
     final var command = mock(GluaCommand.class);
 
     doNothing().when(command).call();
-    CommandLine.call(command);
+    CommandLine.call(command, "src");
 
     verify(command).call();
     assertFalse("verbose flag not set by default", command.verbose());
   }
 
-  /* TODO: Fix
-  
   public void testVerboseWithShortFlag() throws Exception {
     final var command = mock(GluaCommand.class);
 
     doNothing().when(command).call();
-    CommandLine.call(command, "-v");
+    CommandLine.call(command, "-v", "src");
 
     verify(command).call();
-    assertTrue("verbose flag set by -v", command.verbose());
+    // TODO: Fix
+    // assertTrue("verbose flag set by -v", command.verbose());
   }
 
   public void testVerboseWithLongFlag() throws Exception {
     final var command = mock(GluaCommand.class);
-    CommandLine.call(command, "--verbose");
+    CommandLine.call(command, "--verbose", "src");
 
     verify(command).call();
-    assertTrue("verbose flag set by --verbose", command.verbose());
+    // TODO: Fix
+    // assertTrue("verbose flag set by --verbose", command.verbose());
   }
-  */
 }
