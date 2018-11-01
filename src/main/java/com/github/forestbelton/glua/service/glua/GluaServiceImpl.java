@@ -52,7 +52,7 @@ public class GluaServiceImpl implements GluaService {
         logger.info("establishing dependency {} -> {}", module.fileName, dependency.fileName);
 
         dependencyGraph.addVertex(dependency);
-        dependencyGraph.addEdge(module, dependency);
+        dependencyGraph.addEdge(dependency, module);
       }
     }
 
