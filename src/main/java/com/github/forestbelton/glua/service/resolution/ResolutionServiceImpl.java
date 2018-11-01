@@ -33,12 +33,15 @@ public class ResolutionServiceImpl implements ResolutionService {
       var lastEndIndex = 0;
 
       for (var requireCall : requireCalls) {
-        final var upToHere = module.contents().substring(lastEndIndex,
-            requireCall.charStartIndex);
-        final var resolvedName = String.format("_MODULE[%d]",
-            moduleMap.get(requireCall.requirePath));
-
+        final var upToHere = module.contents().substring(lastEndIndex, requireCall.charStartIndex);
         outputBuilder.append(upToHere);
+
+        final var moduleIndex = moduleMap.get(requireCall.requirePath);
+        if (moduleIndex == null) {
+          throw new RuntimeException("unknown module '" + requireCall.requirePath + "'");
+        }
+
+        final var resolvedName = String.format("_MODULES[%d]", moduleIndex);
         outputBuilder.append(resolvedName);
 
         final var callText = module.contents().substring(requireCall.charStartIndex,
