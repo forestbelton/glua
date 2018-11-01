@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
     description = "resolves calls to require() and combines output into a single lua file",
     mixinStandardHelpOptions = true)
 public class GluaCommand implements Callable<Void> {
+  private static final String GLUA_DEBUG_ENV_VAR = "GLUA_DEBUG";
   private static final Logger logger = LogManager.getLogger(GluaCommand.class);
 
   @CommandLine.Parameters(index = "0", description = "The source directory to scan.")
@@ -34,15 +35,19 @@ public class GluaCommand implements Callable<Void> {
   public Void call() throws Exception {
     final var outputFileName = new File(outputFile).getCanonicalPath();
     final var searchDirectoryName = new File(directoryName).getCanonicalPath();
+    final var ctx = (LoggerContext) LogManager.getContext(false);
+    final var config = ctx.getConfiguration();
+    final var loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
 
+    var level = Level.WARN;
     if (verbose) {
-      final var ctx = (LoggerContext) LogManager.getContext(false);
-      final var config = ctx.getConfiguration();
-      final var loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
-
-      loggerConfig.setLevel(Level.INFO);
-      ctx.updateLoggers();
+      level = Level.INFO;
+    } else if ("true".equals(System.getenv(GLUA_DEBUG_ENV_VAR))) {
+      level = Level.DEBUG;
     }
+
+    loggerConfig.setLevel(level);
+    ctx.updateLoggers();
 
     try (final PrintStream outputStream = new PrintStream(new File(outputFileName))) {
       final var settings = GluaSettings.builder()
