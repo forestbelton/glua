@@ -41,7 +41,7 @@ public class ResolutionServiceImpl implements ResolutionService {
           throw new RuntimeException("unknown module '" + requireCall.requirePath + "'");
         }
 
-        final var resolvedName = String.format("_MODULES[%d]", moduleIndex);
+        final var resolvedName = String.format("_MODULES[%d]", moduleIndex + 1);
         outputBuilder.append(resolvedName);
 
         final var callText = module.contents().substring(requireCall.charStartIndex,
